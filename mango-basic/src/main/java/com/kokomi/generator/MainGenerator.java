@@ -29,7 +29,7 @@ public class MainGenerator {
         File parentFile = new File(projectPath).getParentFile();
         System.out.println(parentFile);
         //生成静态文件
-        String inputPath=new File("samples/acm-template").getPath();
+        String inputPath=new File(projectPath,"samples/acm-template").getPath();
         String outputPath=new File(projectPath).getPath();
         StaticGenerator.copyFilesByRecursive(inputPath,outputPath);
         //生成动态文件
