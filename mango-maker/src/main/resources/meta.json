@@ -6,8 +6,9 @@
   "author": "kokomi",
   "createTime": "2024-1-10",
   "fileConfig": {
-    "inputRootPath": "D:/GavinLearning/MyProject/mango/samples/acm-template-pro",
+    "inputRootPath": ".source/acm-template-pro",
     "outputRootPath": "generated",
+    "sourceRootPath": "D:/GavinLearning/MyProject/mango/samples/acm-template-pro",
     "type": "dir",
     "files": [
       {
