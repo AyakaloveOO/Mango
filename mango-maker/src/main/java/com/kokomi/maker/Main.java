@@ -12,9 +12,9 @@ public class Main {
      * @param args
      */
     public static void main(String[] args) throws TemplateException, IOException, InterruptedException {
-        //MainGenerator mainGenerator=new MainGenerator();
-        //mainGenerator.doGenerate();
-        SimplifyGenerator simplifyGenerator=new SimplifyGenerator();
-        simplifyGenerator.doGenerate();
+        MainGenerator mainGenerator=new MainGenerator();
+        mainGenerator.doGenerate();
+        //SimplifyGenerator simplifyGenerator=new SimplifyGenerator();
+        //simplifyGenerator.doGenerate();
     }
 }

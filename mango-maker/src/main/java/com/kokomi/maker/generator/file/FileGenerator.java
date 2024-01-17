@@ -10,14 +10,6 @@ import java.io.IOException;
  * 动静结合生成文件
  */
 public class FileGenerator {
-    public static void main(String[] args) throws TemplateException, IOException {
-        DataModel dataModel = new DataModel();
-        dataModel.setAuthor("kokomi");
-        dataModel.setOutputText("求和结果是");
-        dataModel.setLoop(false);
-        doGenerator(dataModel);
-    }
-
     /**
      * 动静结合生成文件
      * @param model

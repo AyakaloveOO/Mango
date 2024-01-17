@@ -12,21 +12,42 @@
     "type": "dir",
     "files": [
       {
+        "groupKey": "git",
+        "groupName": "git文件",
+        "type": "group",
+        "condition": "needGit",
+        "files": [
+          {
+            "inputPath": "README.md",
+            "outputPath": "README.md",
+            "type": "file",
+            "generateType": "static"
+          },
+          {
+            "inputPath": ".gitignore",
+            "outputPath": ".gitignore",
+            "type": "file",
+            "generateType": "static",
+            "condition": "needGit"
+          }
+        ]
+      },
+      {
         "inputPath": "src/com/kokomi/acm/MainTemplate.java.ftl",
         "outputPath": "src/com/kokomi/acm/MainTemplate.java",
         "type": "file",
         "generateType": "dynamic"
-      },
-      {
-        "inputPath": "README.md",
-        "outputPath": "README.md",
-        "type": "file",
-        "generateType": "static"
       }
     ]
   },
   "modelConfig": {
     "models": [
+      {
+        "fieldName": "needGit",
+        "type": "boolean",
+        "description": "是否生成 .gitignore 文件",
+        "defaultValue": true
+      },
       {
         "fieldName": "loop",
         "type": "boolean",
@@ -35,18 +56,27 @@
         "abbr": "l"
       },
       {
-        "fieldName": "author",
-        "type": "String",
-        "description": "作者",
-        "defaultValue": "kokomi",
-        "abbr": "a"
-      },
-      {
-        "fieldName": "outputText",
-        "type": "String",
-        "description": "输出信息",
-        "defaultValue": "kokomi is the world",
-        "abbr": "o"
+        "groupKey": "mainTemplate",
+        "groupName": "核心模板",
+        "type": "MainTemplate",
+        "description": "生成核心模板文件",
+        "condition": "loop",
+        "models": [
+          {
+            "fieldName": "author",
+            "type": "String",
+            "description": "作者",
+            "defaultValue": "kokomi",
+            "abbr": "a"
+          },
+          {
+            "fieldName": "outputText",
+            "type": "String",
+            "description": "输出信息",
+            "defaultValue": "kokomi is the world",
+            "abbr": "o"
+          }
+        ]
       }
     ]
   }

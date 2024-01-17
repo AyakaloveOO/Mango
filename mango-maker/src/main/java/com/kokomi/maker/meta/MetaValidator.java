@@ -11,6 +11,7 @@ import com.kokomi.maker.meta.enums.ModelTypeEnum;
 import java.io.File;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * 校验和处理默认值
@@ -35,6 +36,16 @@ public class MetaValidator {
             return;
         }
         for (Meta.ModelConfigDTO.ModelsDTO model : models) {
+            String groupKey = model.getGroupKey();
+            if(StrUtil.isNotEmpty(groupKey)){
+                //生成中间参数
+                List<Meta.ModelConfigDTO.ModelsDTO> subModels=model.getModels();
+                String allArgsStr=model.getModels().stream()
+                        .map(subModel->String.format("\"--%s\"",subModel.getFieldName()))
+                        .collect(Collectors.joining(","));
+                model.setAllArgsStr(allArgsStr);
+                continue;
+            }
             String fieldName = model.getFieldName();
             if (StrUtil.isBlank(fieldName)) {
                 throw new MetaException("未填写 fieldName");
@@ -75,6 +86,10 @@ public class MetaValidator {
             return;
         }
         for (Meta.FileConfigDTO.FilesDTO file : files) {
+            String fileType = file.getType();
+            if(FileTypeEnum.GROUP.getValue().equals(fileType)){
+                continue;
+            }
             String inputPath = file.getInputPath();
             if (StrUtil.isBlank(inputPath)) {
                 throw new MetaException("未填写 inputPath");
@@ -83,7 +98,6 @@ public class MetaValidator {
             if (StrUtil.isBlank(outputPath)) {
                 file.setOutputPath(inputPath);
             }
-            String fileType = file.getType();
             if (StrUtil.isBlank(fileType)) {
                 if (StrUtil.isBlank(FileUtil.getSuffix(inputPath))) {
                     file.setType(FileTypeEnum.DIR.getValue());
