@@ -1,6 +1,5 @@
 package com.kokomi.maker.generator.file;
 
-import com.kokomi.maker.model.DataModel;
 import freemarker.template.TemplateException;
 
 import java.io.File;

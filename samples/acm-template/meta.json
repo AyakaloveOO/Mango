@@ -1,0 +1,24 @@
+{
+    "name": "acm-template-generator",
+    "description": "ACM 示例模板生成器",
+    "fileConfig": {
+        "sourceRootPath": "D:/GavinLearning/MyProject/mango/samples/acm-template",
+        "files": [
+            {
+                "inputPath": "src/com/kokomi/acm/MainTemplate.java",
+                "outputPath": "src/com/kokomi/acm/MainTemplate.java.ftl",
+                "type": "file",
+                "generateType": "dynamic"
+            }
+        ]
+    },
+    "modelConfig": {
+        "models": [
+            {
+                "fieldName": "outputText",
+                "type": "String",
+                "defaultValue": "sum ="
+            }
+        ]
+    }
+}
