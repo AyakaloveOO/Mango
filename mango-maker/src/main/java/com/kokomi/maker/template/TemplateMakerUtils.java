@@ -1,0 +1,32 @@
+package com.kokomi.maker.template;
+
+import cn.hutool.core.util.StrUtil;
+import com.kokomi.maker.meta.Meta;
+
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+/**
+ * 模板制作工具类
+ */
+public class TemplateMakerUtils {
+    public static List<Meta.FileConfigDTO.FilesDTO> removeGroupFilesFromRoot(List<Meta.FileConfigDTO.FilesDTO> fileInfoList){
+        //获取所有分组
+        List<Meta.FileConfigDTO.FilesDTO> groupFileInfoList = fileInfoList.stream()
+                .filter(fileInfo -> StrUtil.isNotEmpty(fileInfo.getGroupKey()))
+                .collect(Collectors.toList());
+        //获取所有分组文件列表
+        List<Meta.FileConfigDTO.FilesDTO> groupInnerFileInfoList = groupFileInfoList.stream()
+                .flatMap(fileInfo -> fileInfo.getFiles().stream())
+                .collect(Collectors.toList());
+        //获取所有分组内文件输入路径集合
+        Set<String> fileInputPathSet = groupInnerFileInfoList.stream()
+                .map(Meta.FileConfigDTO.FilesDTO::getInputPath)
+                .collect(Collectors.toSet());
+        //移除所有在集合中的外层文件
+        return fileInfoList.stream()
+                .filter(fileInfo-> !fileInputPathSet.contains(fileInfo.getInputPath()))
+                .collect(Collectors.toList());
+    }
+}
