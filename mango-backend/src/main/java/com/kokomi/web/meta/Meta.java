@@ -1,4 +1,4 @@
-package com.kokomi.maker.meta;
+package com.kokomi.web.meta;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;

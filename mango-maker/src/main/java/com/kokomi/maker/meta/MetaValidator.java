@@ -8,7 +8,6 @@ import com.kokomi.maker.meta.enums.FileGenerateTypeEnum;
 import com.kokomi.maker.meta.enums.FileTypeEnum;
 import com.kokomi.maker.meta.enums.ModelTypeEnum;
 
-import java.io.File;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -27,19 +26,19 @@ public class MetaValidator {
     }
 
     private static void validAndFillModelConfig(Meta meta) {
-        Meta.ModelConfigDTO modelConfig = meta.getModelConfig();
+        Meta.ModelConfig modelConfig = meta.getModelConfig();
         if (modelConfig == null) {
             return;
         }
-        List<Meta.ModelConfigDTO.ModelsDTO> models = modelConfig.getModels();
+        List<Meta.ModelConfig.ModelInfo> models = modelConfig.getModels();
         if (CollectionUtil.isEmpty(models)) {
             return;
         }
-        for (Meta.ModelConfigDTO.ModelsDTO model : models) {
+        for (Meta.ModelConfig.ModelInfo model : models) {
             String groupKey = model.getGroupKey();
             if(StrUtil.isNotEmpty(groupKey)){
                 //生成中间参数
-                List<Meta.ModelConfigDTO.ModelsDTO> subModels=model.getModels();
+                List<Meta.ModelConfig.ModelInfo> subModels=model.getModels();
                 String allArgsStr=model.getModels().stream()
                         .map(subModel->String.format("\"--%s\"",subModel.getFieldName()))
                         .collect(Collectors.joining(","));
@@ -58,7 +57,7 @@ public class MetaValidator {
     }
 
     private static void validAndFillFileConfig(Meta meta) {
-        Meta.FileConfigDTO fileConfig = meta.getFileConfig();
+        Meta.FileConfig fileConfig = meta.getFileConfig();
         if (fileConfig == null) {
             return;
         }
@@ -81,11 +80,11 @@ public class MetaValidator {
             type= FileTypeEnum.DIR.getValue();
             fileConfig.setType(type);
         }
-        List<Meta.FileConfigDTO.FilesDTO> files = fileConfig.getFiles();
+        List<Meta.FileConfig.FileInfo> files = fileConfig.getFiles();
         if (CollectionUtil.isEmpty(files)) {
             return;
         }
-        for (Meta.FileConfigDTO.FilesDTO file : files) {
+        for (Meta.FileConfig.FileInfo file : files) {
             String fileType = file.getType();
             if(FileTypeEnum.GROUP.getValue().equals(fileType)){
                 continue;

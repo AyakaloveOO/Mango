@@ -11,18 +11,18 @@ import java.util.stream.Collectors;
  * 模板制作工具类
  */
 public class TemplateMakerUtils {
-    public static List<Meta.FileConfigDTO.FilesDTO> removeGroupFilesFromRoot(List<Meta.FileConfigDTO.FilesDTO> fileInfoList){
+    public static List<Meta.FileConfig.FileInfo> removeGroupFilesFromRoot(List<Meta.FileConfig.FileInfo> fileInfoList){
         //获取所有分组
-        List<Meta.FileConfigDTO.FilesDTO> groupFileInfoList = fileInfoList.stream()
+        List<Meta.FileConfig.FileInfo> groupFileInfoList = fileInfoList.stream()
                 .filter(fileInfo -> StrUtil.isNotEmpty(fileInfo.getGroupKey()))
                 .collect(Collectors.toList());
         //获取所有分组文件列表
-        List<Meta.FileConfigDTO.FilesDTO> groupInnerFileInfoList = groupFileInfoList.stream()
+        List<Meta.FileConfig.FileInfo> groupInnerFileInfoList = groupFileInfoList.stream()
                 .flatMap(fileInfo -> fileInfo.getFiles().stream())
                 .collect(Collectors.toList());
         //获取所有分组内文件输入路径集合
         Set<String> fileInputPathSet = groupInnerFileInfoList.stream()
-                .map(Meta.FileConfigDTO.FilesDTO::getInputPath)
+                .map(Meta.FileConfig.FileInfo::getInputPath)
                 .collect(Collectors.toSet());
         //移除所有在集合中的外层文件
         return fileInfoList.stream()

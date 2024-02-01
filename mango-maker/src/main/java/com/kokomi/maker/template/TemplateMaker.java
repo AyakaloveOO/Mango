@@ -10,12 +10,9 @@ import cn.hutool.json.JSONUtil;
 import com.kokomi.maker.meta.Meta;
 import com.kokomi.maker.meta.enums.FileGenerateTypeEnum;
 import com.kokomi.maker.meta.enums.FileTypeEnum;
-import com.kokomi.maker.template.enums.FileFilterRangeEnum;
-import com.kokomi.maker.template.enums.FileFilterRuleEnum;
 import com.kokomi.maker.template.model.*;
 
 import java.io.File;
-import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -63,9 +60,9 @@ public class TemplateMaker {
         //路径转义
         sourceRootPath=sourceRootPath.replaceAll("\\\\","/");
         //制作文件模板
-        List<Meta.FileConfigDTO.FilesDTO> newFileInfoList = makeFileTemplates(templateMakerFileConfig, templateMakerModelConfig, sourceRootPath);
+        List<Meta.FileConfig.FileInfo> newFileInfoList = makeFileTemplates(templateMakerFileConfig, templateMakerModelConfig, sourceRootPath);
         //处理模型信息
-        List<Meta.ModelConfigDTO.ModelsDTO> newModelInfoList = getModelInfoList(templateMakerModelConfig);
+        List<Meta.ModelConfig.ModelInfo> newModelInfoList = getModelInfoList(templateMakerModelConfig);
 
         //3、生成配置文件
         String metaOutputPath=templatePath+File.separator+"meta.json";
@@ -76,9 +73,9 @@ public class TemplateMaker {
             BeanUtil.copyProperties(newMeta,oldMeta, CopyOptions.create().ignoreNullValue());
             newMeta=oldMeta;
 
-            List<Meta.FileConfigDTO.FilesDTO> fileInfoList = newMeta.getFileConfig().getFiles();
+            List<Meta.FileConfig.FileInfo> fileInfoList = newMeta.getFileConfig().getFiles();
             fileInfoList.addAll(newFileInfoList);
-            List<Meta.ModelConfigDTO.ModelsDTO> modelInfoList = newMeta.getModelConfig().getModels();
+            List<Meta.ModelConfig.ModelInfo> modelInfoList = newMeta.getModelConfig().getModels();
             modelInfoList.addAll(newModelInfoList);
             //去重
             newMeta.getFileConfig().setFiles(distinctFiles(fileInfoList));
@@ -86,27 +83,27 @@ public class TemplateMaker {
         }else {
             //- 构造配置参数
 
-            Meta.FileConfigDTO fileConfig=new Meta.FileConfigDTO();
+            Meta.FileConfig fileConfig=new Meta.FileConfig();
             newMeta.setFileConfig(fileConfig);
 
             fileConfig.setSourceRootPath(sourceRootPath);
 
-            List<Meta.FileConfigDTO.FilesDTO> fileInfoList=new ArrayList<>();
+            List<Meta.FileConfig.FileInfo> fileInfoList=new ArrayList<>();
             fileConfig.setFiles(fileInfoList);
 
             fileInfoList.addAll(newFileInfoList);
 
-            Meta.ModelConfigDTO modelConfig=new Meta.ModelConfigDTO();
+            Meta.ModelConfig modelConfig=new Meta.ModelConfig();
             newMeta.setModelConfig(modelConfig);
 
-            List<Meta.ModelConfigDTO.ModelsDTO> modelsInfoList=new ArrayList<>();
+            List<Meta.ModelConfig.ModelInfo> modelsInfoList=new ArrayList<>();
             modelConfig.setModels(modelsInfoList);
             modelsInfoList.addAll(newModelInfoList);
         }
         //输出配置
         if(templateMakerOutputConfig!=null){
             if(templateMakerOutputConfig.isRemoveGroupFilesFromRoot()){
-                List<Meta.FileConfigDTO.FilesDTO> fileInfoList = newMeta.getFileConfig().getFiles();
+                List<Meta.FileConfig.FileInfo> fileInfoList = newMeta.getFileConfig().getFiles();
                 newMeta.getFileConfig().setFiles(TemplateMakerUtils.removeGroupFilesFromRoot(fileInfoList));
             }
         }
@@ -115,8 +112,8 @@ public class TemplateMaker {
         return id;
     }
 
-    private static List<Meta.ModelConfigDTO.ModelsDTO> getModelInfoList(TemplateMakerModelConfig templateMakerModelConfig) {
-        List<Meta.ModelConfigDTO.ModelsDTO> newModelInfoList=new ArrayList<>();
+    private static List<Meta.ModelConfig.ModelInfo> getModelInfoList(TemplateMakerModelConfig templateMakerModelConfig) {
+        List<Meta.ModelConfig.ModelInfo> newModelInfoList=new ArrayList<>();
         if(templateMakerModelConfig==null){
             return newModelInfoList;
         }
@@ -125,9 +122,9 @@ public class TemplateMaker {
             return newModelInfoList;
         }
         //处理模型信息
-        List<Meta.ModelConfigDTO.ModelsDTO> inputModelInfoList = models.stream()
+        List<Meta.ModelConfig.ModelInfo> inputModelInfoList = models.stream()
                 .map(modelInfoConfig -> {
-                    Meta.ModelConfigDTO.ModelsDTO modelInfo = new Meta.ModelConfigDTO.ModelsDTO();
+                    Meta.ModelConfig.ModelInfo modelInfo = new Meta.ModelConfig.ModelInfo();
                     BeanUtil.copyProperties(modelInfoConfig, modelInfo);
                     return modelInfo;
                 }).collect(Collectors.toList());
@@ -135,7 +132,7 @@ public class TemplateMaker {
         //模型组
         TemplateMakerModelConfig.ModelGroupConfig modelGroupConfig = templateMakerModelConfig.getModelGroupConfig();
         if(modelGroupConfig!=null){
-            Meta.ModelConfigDTO.ModelsDTO groupModelInfo = new Meta.ModelConfigDTO.ModelsDTO();
+            Meta.ModelConfig.ModelInfo groupModelInfo = new Meta.ModelConfig.ModelInfo();
             BeanUtil.copyProperties(modelGroupConfig,groupModelInfo);
 
             groupModelInfo.setModels(inputModelInfoList);
@@ -146,9 +143,9 @@ public class TemplateMaker {
         return newModelInfoList;
     }
 
-    private static List<Meta.FileConfigDTO.FilesDTO> makeFileTemplates(TemplateMakerFileConfig templateMakerFileConfig, TemplateMakerModelConfig templateMakerModelConfig, String sourceRootPath) {
+    private static List<Meta.FileConfig.FileInfo> makeFileTemplates(TemplateMakerFileConfig templateMakerFileConfig, TemplateMakerModelConfig templateMakerModelConfig, String sourceRootPath) {
         //非空校验
-        List<Meta.FileConfigDTO.FilesDTO> newFileInfoList=new ArrayList<>();
+        List<Meta.FileConfig.FileInfo> newFileInfoList=new ArrayList<>();
         if(templateMakerFileConfig==null){
             return newFileInfoList;
         }
@@ -170,7 +167,7 @@ public class TemplateMaker {
                     .filter(file -> !file.getAbsolutePath().endsWith(".ftl"))
                     .collect(Collectors.toList());
             for (File file : fileList) {
-                Meta.FileConfigDTO.FilesDTO fileInfo = makeFileTemplate(file, templateMakerModelConfig, sourceRootPath,fileInfoConfig);
+                Meta.FileConfig.FileInfo fileInfo = makeFileTemplate(file, templateMakerModelConfig, sourceRootPath,fileInfoConfig);
                 newFileInfoList.add(fileInfo);
             }
         }
@@ -182,7 +179,7 @@ public class TemplateMaker {
             String groupName = fileGroupConfig.getGroupName();
             String condition = fileGroupConfig.getCondition();
 
-            Meta.FileConfigDTO.FilesDTO groupFileInfo = new Meta.FileConfigDTO.FilesDTO();
+            Meta.FileConfig.FileInfo groupFileInfo = new Meta.FileConfig.FileInfo();
             groupFileInfo.setType(FileTypeEnum.GROUP.getValue());
             groupFileInfo.setCondition(condition);
             groupFileInfo.setGroupKey(groupKey);
@@ -201,7 +198,7 @@ public class TemplateMaker {
      * @param sourceRootPath
      * @return
      */
-    private static Meta.FileConfigDTO.FilesDTO makeFileTemplate(File inputFile, TemplateMakerModelConfig templateMakerModelConfig, String sourceRootPath, TemplateMakerFileConfig.FileInfoConfig fileInfoConfig) {
+    private static Meta.FileConfig.FileInfo makeFileTemplate(File inputFile, TemplateMakerModelConfig templateMakerModelConfig, String sourceRootPath, TemplateMakerFileConfig.FileInfoConfig fileInfoConfig) {
         String fileInputAbsolutePath= inputFile.getAbsolutePath().replaceAll("\\\\","/");
         String fileOutputAbsolutePath= fileInputAbsolutePath+".ftl";
         //生成文件路径
@@ -235,7 +232,7 @@ public class TemplateMaker {
         }
 
         //文件配置信息
-        Meta.FileConfigDTO.FilesDTO fileInfo=new Meta.FileConfigDTO.FilesDTO();
+        Meta.FileConfig.FileInfo fileInfo=new Meta.FileConfig.FileInfo();
         fileInfo.setInputPath(fileOutputPath);
         fileInfo.setOutputPath(fileInputPath);
         fileInfo.setCondition(fileInfoConfig.getCondition());
@@ -265,36 +262,36 @@ public class TemplateMaker {
      * @param fileInfoList
      * @return
      */
-    private static List<Meta.FileConfigDTO.FilesDTO> distinctFiles(List<Meta.FileConfigDTO.FilesDTO> fileInfoList){
-        Map<String,List<Meta.FileConfigDTO.FilesDTO>> groupKeyFileInfoListMap=fileInfoList.stream()
+    private static List<Meta.FileConfig.FileInfo> distinctFiles(List<Meta.FileConfig.FileInfo> fileInfoList){
+        Map<String,List<Meta.FileConfig.FileInfo>> groupKeyFileInfoListMap=fileInfoList.stream()
                 .filter(fileInfo->StrUtil.isNotEmpty(fileInfo.getGroupKey()))
                 .collect(
-                        Collectors.groupingBy(Meta.FileConfigDTO.FilesDTO::getGroupKey)
+                        Collectors.groupingBy(Meta.FileConfig.FileInfo::getGroupKey)
                 );
 
-        Map<String,Meta.FileConfigDTO.FilesDTO> groupKeyMergedFileInfoMap=new HashMap<>();
-        for (Map.Entry<String, List<Meta.FileConfigDTO.FilesDTO>> entry : groupKeyFileInfoListMap.entrySet()) {
-            List<Meta.FileConfigDTO.FilesDTO> tempFileInfoList = entry.getValue();
-            List<Meta.FileConfigDTO.FilesDTO> newFileInfoList=new ArrayList<>(tempFileInfoList.stream()
+        Map<String, Meta.FileConfig.FileInfo> groupKeyMergedFileInfoMap=new HashMap<>();
+        for (Map.Entry<String, List<Meta.FileConfig.FileInfo>> entry : groupKeyFileInfoListMap.entrySet()) {
+            List<Meta.FileConfig.FileInfo> tempFileInfoList = entry.getValue();
+            List<Meta.FileConfig.FileInfo> newFileInfoList=new ArrayList<>(tempFileInfoList.stream()
                     .flatMap(fileInfo->fileInfo.getFiles().stream())
                     .collect(
-                            Collectors.toMap(Meta.FileConfigDTO.FilesDTO::getOutputPath,o->o,(e,r)->r)
+                            Collectors.toMap(Meta.FileConfig.FileInfo::getOutputPath, o->o,(e, r)->r)
                     ).values()
             );
-            Meta.FileConfigDTO.FilesDTO newFileInfo = CollUtil.getLast(tempFileInfoList);
+            Meta.FileConfig.FileInfo newFileInfo = CollUtil.getLast(tempFileInfoList);
             newFileInfo.setFiles(newFileInfoList);
             String groupKey = entry.getKey();
             groupKeyMergedFileInfoMap.put(groupKey,newFileInfo);
         }
 
-        List<Meta.FileConfigDTO.FilesDTO> resultList=new ArrayList<>(groupKeyMergedFileInfoMap.values());
+        List<Meta.FileConfig.FileInfo> resultList=new ArrayList<>(groupKeyMergedFileInfoMap.values());
 
-        List<Meta.FileConfigDTO.FilesDTO> noGroupFileInfoList=fileInfoList.stream()
+        List<Meta.FileConfig.FileInfo> noGroupFileInfoList=fileInfoList.stream()
                 .filter(fileInfo->StrUtil.isBlank(fileInfo.getGroupKey()))
                 .collect(Collectors.toList());
         resultList.addAll(new ArrayList<>(noGroupFileInfoList.stream()
                 .collect(
-                        Collectors.toMap(Meta.FileConfigDTO.FilesDTO::getOutputPath,o->o,(e,r)->r)
+                        Collectors.toMap(Meta.FileConfig.FileInfo::getOutputPath, o->o,(e, r)->r)
                 ).values())
         );
         return resultList;
@@ -304,36 +301,36 @@ public class TemplateMaker {
      * @param modelInfoList
      * @return
      */
-    private static List<Meta.ModelConfigDTO.ModelsDTO> distinctModels(List<Meta.ModelConfigDTO.ModelsDTO> modelInfoList){
-        Map<String,List<Meta.ModelConfigDTO.ModelsDTO>> groupKeyModelInfoListMap=modelInfoList.stream()
+    private static List<Meta.ModelConfig.ModelInfo> distinctModels(List<Meta.ModelConfig.ModelInfo> modelInfoList){
+        Map<String,List<Meta.ModelConfig.ModelInfo>> groupKeyModelInfoListMap=modelInfoList.stream()
                 .filter(modelInfo->StrUtil.isNotEmpty(modelInfo.getGroupKey()))
                 .collect(
-                        Collectors.groupingBy(Meta.ModelConfigDTO.ModelsDTO::getGroupKey)
+                        Collectors.groupingBy(Meta.ModelConfig.ModelInfo::getGroupKey)
                 );
 
-        Map<String,Meta.ModelConfigDTO.ModelsDTO> groupKeyMergedModelInfoMap=new HashMap<>();
-        for (Map.Entry<String, List<Meta.ModelConfigDTO.ModelsDTO>> entry : groupKeyModelInfoListMap.entrySet()) {
-            List<Meta.ModelConfigDTO.ModelsDTO> tempModelInfoList = entry.getValue();
-            List<Meta.ModelConfigDTO.ModelsDTO> newModelInfoList=new ArrayList<>(tempModelInfoList.stream()
+        Map<String, Meta.ModelConfig.ModelInfo> groupKeyMergedModelInfoMap=new HashMap<>();
+        for (Map.Entry<String, List<Meta.ModelConfig.ModelInfo>> entry : groupKeyModelInfoListMap.entrySet()) {
+            List<Meta.ModelConfig.ModelInfo> tempModelInfoList = entry.getValue();
+            List<Meta.ModelConfig.ModelInfo> newModelInfoList=new ArrayList<>(tempModelInfoList.stream()
                     .flatMap(modelInfo->modelInfo.getModels().stream())
                     .collect(
-                            Collectors.toMap(Meta.ModelConfigDTO.ModelsDTO::getFieldName,o->o,(e,r)->r)
+                            Collectors.toMap(Meta.ModelConfig.ModelInfo::getFieldName, o->o,(e, r)->r)
                     ).values()
             );
-            Meta.ModelConfigDTO.ModelsDTO newModelInfo = CollUtil.getLast(tempModelInfoList);
+            Meta.ModelConfig.ModelInfo newModelInfo = CollUtil.getLast(tempModelInfoList);
             newModelInfo.setModels(newModelInfoList);
             String groupKey = entry.getKey();
             groupKeyMergedModelInfoMap.put(groupKey,newModelInfo);
         }
 
-        List<Meta.ModelConfigDTO.ModelsDTO> resultList=new ArrayList<>(groupKeyMergedModelInfoMap.values());
+        List<Meta.ModelConfig.ModelInfo> resultList=new ArrayList<>(groupKeyMergedModelInfoMap.values());
 
-        List<Meta.ModelConfigDTO.ModelsDTO> noGroupModelInfoList=modelInfoList.stream()
+        List<Meta.ModelConfig.ModelInfo> noGroupModelInfoList=modelInfoList.stream()
                 .filter(modelInfo->StrUtil.isBlank(modelInfo.getGroupKey()))
                 .collect(Collectors.toList());
         resultList.addAll(new ArrayList<>(noGroupModelInfoList.stream()
                 .collect(
-                        Collectors.toMap(Meta.ModelConfigDTO.ModelsDTO::getFieldName,o->o,(e,r)->r)
+                        Collectors.toMap(Meta.ModelConfig.ModelInfo::getFieldName, o->o,(e, r)->r)
                 ).values())
         );
         return resultList;
