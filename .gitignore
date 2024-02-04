@@ -5,6 +5,7 @@ target
 **/generated
 **/.temp
 **/.mvn
+application-local.yml
 
 # dependencies
 **/node_modules
@@ -51,7 +52,7 @@ build
 *.class
 
 # Log file
-*.log
+#*.log
 
 # BlueJ files
 *.ctxt

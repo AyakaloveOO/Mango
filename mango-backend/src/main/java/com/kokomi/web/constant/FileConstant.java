@@ -8,5 +8,5 @@ public interface FileConstant {
     /**
      * COS 访问地址
      */
-    String COS_HOST = "";
+    String COS_HOST = "https://mango-1324226286.cos.ap-beijing.myqcloud.com";
 }

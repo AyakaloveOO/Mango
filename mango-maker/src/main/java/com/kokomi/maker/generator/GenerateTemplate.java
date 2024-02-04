@@ -3,6 +3,7 @@ package com.kokomi.maker.generator;
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.io.resource.ClassPathResource;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.util.ZipUtil;
 import com.kokomi.maker.generator.file.DynamicFileGenerator;
 import com.kokomi.maker.meta.Meta;
 import com.kokomi.maker.meta.MetaManager;
@@ -38,7 +39,7 @@ public abstract class GenerateTemplate {
         return shellOutputPath;
     }
 
-    protected void buildDist(String outputPath, String sourceCopyPath, String shellOutputPath, String jarPath) {
+    protected String buildDist(String outputPath, String sourceCopyPath, String shellOutputPath, String jarPath) {
         String distOutputPath= outputPath +"-dist";
         //-拷贝jar包
         String targetAbsolutePath=distOutputPath+File.separator+"target";
@@ -50,6 +51,7 @@ public abstract class GenerateTemplate {
         FileUtil.copy(shellOutputPath +".bat",distOutputPath,true);
         //-拷贝原模板文件
         FileUtil.copy(sourceCopyPath,distOutputPath,true);
+        return distOutputPath;
     }
 
     protected String buildJar(String outputPath,Meta meta) throws IOException, InterruptedException {
@@ -57,6 +59,12 @@ public abstract class GenerateTemplate {
         String jarName=String.format("%s-%s-jar-with-dependencies.jar",meta.getName(),meta.getVersion());
         String jarPath="target"+File.separator+jarName;
         return jarPath;
+    }
+
+    protected String buildZip(String outputPath){
+        String zipPath=outputPath+".zip";
+        ZipUtil.zip(outputPath,zipPath);
+        return zipPath;
     }
 
     protected void generateCode(Meta meta, String outputPath) throws IOException, TemplateException {

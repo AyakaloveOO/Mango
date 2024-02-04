@@ -1,7 +1,9 @@
 package com.kokomi.maker;
 
+import com.kokomi.maker.generator.GenerateTemplate;
 import com.kokomi.maker.generator.MainGenerator;
 import com.kokomi.maker.generator.SimplifyGenerator;
+import com.kokomi.maker.generator.ZipGenerator;
 import freemarker.template.TemplateException;
 
 import java.io.IOException;
@@ -12,9 +14,7 @@ public class Main {
      * @param args
      */
     public static void main(String[] args) throws TemplateException, IOException, InterruptedException {
-        MainGenerator mainGenerator=new MainGenerator();
-        mainGenerator.doGenerate();
-        //SimplifyGenerator simplifyGenerator=new SimplifyGenerator();
-        //simplifyGenerator.doGenerate();
+        GenerateTemplate generateTemplate=new ZipGenerator();
+        generateTemplate.doGenerate();
     }
 }

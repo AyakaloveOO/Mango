@@ -5,7 +5,8 @@ package com.kokomi.maker.generator;
  */
 public class MainGenerator extends GenerateTemplate{
     @Override
-    protected void buildDist(String outputPath, String sourceCopyPath, String shellOutputPath, String jarPath) {
+    protected String buildDist(String outputPath, String sourceCopyPath, String shellOutputPath, String jarPath) {
         System.out.println("不输出精简代码");
+        return "";
     }
 }

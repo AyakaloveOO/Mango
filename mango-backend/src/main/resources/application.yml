@@ -49,7 +49,3 @@ cos:
     secretKey: xxx
     region: xxx
     bucket: xxx
-springdoc:
-  group-configs:
-    - group: 'default'
-      packages-to-scan: com.kokomi.web.controller
