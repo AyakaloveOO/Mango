@@ -1,6 +1,8 @@
 package com.kokomi.web.controller;
 
+import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.util.ZipUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.kokomi.web.annotation.AuthCheck;
@@ -13,10 +15,7 @@ import com.kokomi.web.exception.BusinessException;
 import com.kokomi.web.exception.ThrowUtils;
 import com.kokomi.web.manager.CosManager;
 import com.kokomi.web.meta.Meta;
-import com.kokomi.web.model.dto.generator.GeneratorAddRequest;
-import com.kokomi.web.model.dto.generator.GeneratorEditRequest;
-import com.kokomi.web.model.dto.generator.GeneratorQueryRequest;
-import com.kokomi.web.model.dto.generator.GeneratorUpdateRequest;
+import com.kokomi.web.model.dto.generator.*;
 import com.kokomi.web.model.entity.Generator;
 import com.kokomi.web.model.entity.User;
 import com.kokomi.web.model.vo.GeneratorVO;
@@ -32,8 +31,14 @@ import org.springframework.web.bind.annotation.*;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
+import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.attribute.PosixFilePermission;
+import java.nio.file.attribute.PosixFilePermissions;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * 帖子接口
@@ -295,5 +300,95 @@ public class GeneratorController {
                 cosObjectInput.close();
             }
         }
+    }
+
+    /**
+     * 使用代码生成器
+     * @param generatorUseRequest
+     * @param request
+     * @param response
+     */
+    @PostMapping("/use")
+    public void useGenerator(@RequestBody GeneratorUseRequest generatorUseRequest,HttpServletRequest request,HttpServletResponse response) throws IOException {
+        Long id = generatorUseRequest.getId();
+        Map<String, Object> dataModel = generatorUseRequest.getDataModel();
+        //判断是否登录
+        User loginUser = userService.getLoginUser(request);
+        log.info("userId={} 使用了生成器 id={}",loginUser.getId(),id);
+        Generator generator = generatorService.getById(id);
+        if(generator==null){
+            throw new BusinessException(ErrorCode.NOT_FOUND_ERROR);
+        }
+        String distPath = generator.getDistPath();
+        if(StrUtil.isBlank(distPath)){
+            throw new BusinessException(ErrorCode.NOT_FOUND_ERROR,"产物包不存在");
+        }
+        String projectPath=System.getProperty("user.dir");
+        String tempDirPath=String.format("%s/.temp/use/%s",projectPath,id);
+        String zipFilePath=tempDirPath+"/dist.zip";
+        if(!FileUtil.exist(zipFilePath)){
+            FileUtil.touch(zipFilePath);
+        }
+        //下载生成器
+        try {
+            cosManager.download(distPath,zipFilePath);
+        }catch (Exception e){
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR,"生成器下载失败");
+        }
+        //解压
+        File unzipDistDir = ZipUtil.unzip(zipFilePath);
+        //将用户输入参数写入脚本文件中
+        String dataModelFilePath=tempDirPath+"/dataModel.json";
+        String jsonStr = JSONUtil.toJsonStr(dataModel);
+        FileUtil.writeUtf8String(jsonStr,dataModelFilePath);
+        //执行脚本
+        //windows执行.bat文件
+        File scriptFile = FileUtil.loopFiles(unzipDistDir, 2, null)
+                .stream()
+                .filter(file -> file.isFile() && "generator.bat".equals(file.getName()))
+                .findFirst()
+                .orElseThrow(RuntimeException::new);
+        //添加可执行权限
+        try {
+            Set<PosixFilePermission> permissions = PosixFilePermissions.fromString("rwxrwxrwx");
+            Files.setPosixFilePermissions(scriptFile.toPath(),permissions);
+        }catch (Exception e){
+
+        }
+        File scriptDir = scriptFile.getParentFile();
+        String scriptAbsolutePath = scriptFile.getAbsolutePath().replace("\\", "/");
+        String[] commands = new String[] {scriptAbsolutePath, "json-generate", "--file=" + dataModelFilePath};
+        ProcessBuilder processBuilder = new ProcessBuilder(commands);
+        processBuilder.directory(scriptDir);
+        try {
+            Process process = processBuilder.start();
+
+            // 读取命令的输出
+            InputStream inputStream = process.getInputStream();
+            BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+            String line;
+            while ((line = reader.readLine()) != null) {
+                System.out.println(line);
+            }
+
+            // 等待命令执行完成
+            int exitCode = process.waitFor();
+            System.out.println("命令执行结束，退出码：" + exitCode);
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "执行生成器脚本错误");
+        }
+        // 压缩得到的生成结果，返回给前端
+        String generatedPath = scriptDir.getAbsolutePath() + "/generated";
+        String resultPath = tempDirPath + "/result.zip";
+        File resultFile = ZipUtil.zip(generatedPath, resultPath);
+        // 设置响应头
+        response.setContentType("application/octet-stream;charset=UTF-8");
+        response.setHeader("Content-Disposition", "attachment; filename=" + resultFile.getName());
+        Files.copy(resultFile.toPath(), response.getOutputStream());
+        // 清理文件
+        CompletableFuture.runAsync(() -> {
+            FileUtil.del(tempDirPath);
+        });
     }
 }

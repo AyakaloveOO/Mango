@@ -17,18 +17,22 @@ const IndexPage: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [dataList, setDataList] = useState<API.GeneratorVO[]>([]);
   const [total, setTotal] = useState<number>(0);
+  // 搜索条件
   const [searchParams, setSearchParams] = useState<API.GeneratorQueryRequest>({
     ...DEFAULT_PAGE_PARAMS,
   });
 
+  /**
+   * 搜索
+   */
   const doSearch = async () => {
     setLoading(true);
     try {
       const res = await listGeneratorVoByPageUsingPost(searchParams);
       setDataList(res.data?.records ?? []);
-      setTotal(Number(res.data?.total ?? 0));
+      setTotal(Number(res.data?.total) ?? 0);
     } catch (error: any) {
-      message.error('获取数据失败', error.message);
+      message.error('获取数据失败，' + error.message);
     }
     setLoading(false);
   };
@@ -37,10 +41,15 @@ const IndexPage: React.FC = () => {
     doSearch();
   }, [searchParams]);
 
+  /**
+   * 标签列表
+   * @param tags
+   */
   const tagListView = (tags?: string[]) => {
     if (!tags) {
       return <></>;
     }
+
     return (
       <div style={{ marginBottom: 8 }}>
         {tags.map((tag) => (
@@ -52,7 +61,7 @@ const IndexPage: React.FC = () => {
 
   return (
     <PageContainer title={<></>}>
-      <Flex justify={'center'}>
+      <Flex justify="center">
         <Input.Search
           style={{
             width: '40vw',
@@ -75,8 +84,9 @@ const IndexPage: React.FC = () => {
         />
       </Flex>
       <div style={{ marginBottom: 16 }} />
+
       <Tabs
-        size={'large'}
+        size="large"
         defaultActiveKey="newest"
         items={[
           {
@@ -90,6 +100,7 @@ const IndexPage: React.FC = () => {
         ]}
         onChange={() => {}}
       />
+
       <QueryFilter
         span={12}
         labelWidth="auto"
@@ -99,16 +110,19 @@ const IndexPage: React.FC = () => {
         onFinish={async (values: API.GeneratorQueryRequest) => {
           setSearchParams({
             ...DEFAULT_PAGE_PARAMS,
+            // @ts-ignore
             ...values,
             searchText: searchParams.searchText,
           });
         }}
       >
-        <ProFormSelect name="tags" label="标签" mode="tags" />
-        <ProFormText name="name" label="名称" />
-        <ProFormText name="description" label="描述" />
+        <ProFormSelect label="标签" name="tags" mode="tags" />
+        <ProFormText label="名称" name="name" />
+        <ProFormText label="描述" name="description" />
       </QueryFilter>
+
       <div style={{ marginBottom: 24 }} />
+
       <List<API.GeneratorVO>
         rowKey="id"
         loading={loading}
@@ -141,21 +155,14 @@ const IndexPage: React.FC = () => {
                 <Card.Meta
                   title={<a>{data.name}</a>}
                   description={
-                    <Typography.Paragraph
-                      ellipsis={{
-                        rows: 2,
-                      }}
-                      style={{
-                        height: 44,
-                      }}
-                    >
+                    <Typography.Paragraph ellipsis={{ rows: 2 }} style={{ height: 44 }}>
                       {data.description}
                     </Typography.Paragraph>
                   }
                 />
                 {tagListView(data.tags)}
                 <Flex justify="space-between" align="center">
-                  <Typography.Text type={'secondary'} style={{ fontSize: 12 }}>
+                  <Typography.Text type="secondary" style={{ fontSize: 12 }}>
                     {moment(data.createTime).fromNow()}
                   </Typography.Text>
                   <div>

@@ -8,7 +8,6 @@ public class Main {
      * @param args
      */
     public static void main(String[] args) {
-        //args=new String[]{"list"};
         CommandExecutor commandExecutor = new CommandExecutor();
         commandExecutor.doExecute(args);
     }
