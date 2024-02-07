@@ -1,10 +1,15 @@
 package com.kokomi.web.controller;
 
 import cn.hutool.core.io.FileUtil;
+import cn.hutool.core.util.IdUtil;
+import cn.hutool.core.util.RandomUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.core.util.ZipUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.kokomi.maker.generator.GenerateTemplate;
+import com.kokomi.maker.generator.ZipGenerator;
+import com.kokomi.maker.meta.MetaValidator;
 import com.kokomi.web.annotation.AuthCheck;
 import com.kokomi.web.common.BaseResponse;
 import com.kokomi.web.common.DeleteRequest;
@@ -14,7 +19,7 @@ import com.kokomi.web.constant.UserConstant;
 import com.kokomi.web.exception.BusinessException;
 import com.kokomi.web.exception.ThrowUtils;
 import com.kokomi.web.manager.CosManager;
-import com.kokomi.web.meta.Meta;
+import com.kokomi.maker.meta.Meta;
 import com.kokomi.web.model.dto.generator.*;
 import com.kokomi.web.model.entity.Generator;
 import com.kokomi.web.model.entity.User;
@@ -33,6 +38,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.*;
 import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.nio.file.attribute.PosixFilePermission;
 import java.nio.file.attribute.PosixFilePermissions;
 import java.util.List;
@@ -387,6 +393,64 @@ public class GeneratorController {
         response.setHeader("Content-Disposition", "attachment; filename=" + resultFile.getName());
         Files.copy(resultFile.toPath(), response.getOutputStream());
         // 清理文件
+        CompletableFuture.runAsync(() -> {
+            FileUtil.del(tempDirPath);
+        });
+    }
+
+    /**
+     * 制作代码生成器
+     * @param generatorMakeRequest
+     * @param request
+     * @param response
+     */
+    @PostMapping("/make")
+    public void makeGenerator(@RequestBody GeneratorMakeRequest generatorMakeRequest,HttpServletRequest request,HttpServletResponse response) throws IOException {
+        String zipFilePath = generatorMakeRequest.getZipFilePath();
+        Meta meta = generatorMakeRequest.getMeta();
+        //需要登录
+        User loginUser = userService.getLoginUser(request);
+        if(StrUtil.isBlank(zipFilePath)){
+            throw new BusinessException(ErrorCode.NOT_FOUND_ERROR,"压缩包不存在");
+        }
+        log.info("userId={} 在线制作生成器 id={}",loginUser.getId());
+        //创建工作空间
+        String projectPath=System.getProperty("user.dir");
+        String id = IdUtil.getSnowflakeNextId() + RandomUtil.randomString(6);
+        String tempDirPath=String.format("%s/.temp/make/%s",projectPath,id);
+        String localZipFilePath=tempDirPath+"/project.zip";
+        if(!FileUtil.exist(localZipFilePath)){
+            FileUtil.touch(localZipFilePath);
+        }
+        //下载文件
+        try {
+            cosManager.download(zipFilePath,localZipFilePath);
+        }catch (Exception e){
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR,"压缩包下载失败");
+        }
+        //解压文件
+        File unzipDistDir = ZipUtil.unzip(localZipFilePath);
+        //构造meta对象和输出路径
+        String sourceRootPath=unzipDistDir.getAbsolutePath();
+        meta.getFileConfig().setSourceRootPath(sourceRootPath);
+        MetaValidator.validAndFill(meta);
+        String outputPath=tempDirPath+"/generated/"+meta.getName();
+        //制作生成器
+        GenerateTemplate generateTemplate=new ZipGenerator();
+        try {
+            generateTemplate.doGenerate(meta,outputPath);
+        }catch (Exception e){
+            e.printStackTrace();
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR,"制作失败");
+        }
+        //下载制作好的压缩包
+        String suffix="-dist.zip";
+        String zipFileName=meta.getName()+suffix;
+        String distZipFilePath=outputPath+suffix;
+        response.setContentType("application/octet-stream;charset=UTF-8");
+        response.setHeader("Content-Disposition", "attachment; filename=" + zipFileName);
+        Files.copy(Paths.get(distZipFilePath), response.getOutputStream());
+        //清理文件
         CompletableFuture.runAsync(() -> {
             FileUtil.del(tempDirPath);
         });
