@@ -5,7 +5,6 @@ import com.kokomi.web.annotation.AuthCheck;
 import com.kokomi.web.common.BaseResponse;
 import com.kokomi.web.common.ErrorCode;
 import com.kokomi.web.common.ResultUtils;
-import com.kokomi.web.constant.FileConstant;
 import com.kokomi.web.constant.UserConstant;
 import com.kokomi.web.exception.BusinessException;
 import com.kokomi.web.manager.CosManager;

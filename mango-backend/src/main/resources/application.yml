@@ -16,6 +16,11 @@ spring:
   servlet:
     multipart:
       max-file-size: 10MB
+  redis:
+    database: 1
+    host: localhost
+    port: 6379
+    timeout: 5000
 server:
   address: 0.0.0.0
   port: 8081
@@ -24,6 +29,11 @@ server:
     session:
       cookie:
         max-age: 2592000
+  tomcat:
+    max-connections: 10000
+    threads:
+      max: 10000
+    accept-count: 1000
 mybatis-plus:
   configuration:
     map-underscore-to-camel-case: false

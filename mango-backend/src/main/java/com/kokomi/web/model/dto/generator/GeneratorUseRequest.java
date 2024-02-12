@@ -1,10 +1,8 @@
 package com.kokomi.web.model.dto.generator;
 
-import com.kokomi.maker.meta.Meta;
 import lombok.Data;
 
 import java.io.Serializable;
-import java.util.List;
 import java.util.Map;
 
 /**
