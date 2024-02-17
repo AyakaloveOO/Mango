@@ -66,7 +66,7 @@ const Login: React.FC = () => {
             maxWidth: '75vw',
           }}
           logo={<img alt="logo" style={{ height: '100%' }} src="/logo.png" />}
-          title="芒果"
+          title="mango"
           subTitle={'高效制作代码生成器'}
           initialValues={{
             autoLogin: true,

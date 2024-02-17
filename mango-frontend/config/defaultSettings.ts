@@ -15,7 +15,7 @@ const Settings: ProLayoutProps & {
   fixedHeader: false,
   fixSiderbar: true,
   colorWeak: false,
-  title: '芒果',
+  title: 'mango',
   pwa: true,
   iconfontUrl: '',
   token: {

@@ -45,6 +45,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.*;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.PosixFilePermission;
 import java.nio.file.attribute.PosixFilePermissions;
@@ -325,6 +326,11 @@ public class GeneratorController {
             throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
         }
         boolean result = generatorService.updateById(generator);
+        // 清理缓存
+        if (result) {
+            String cacheFileDir = getCacheFileDir(id);
+            FileUtil.del(cacheFileDir);
+        }
         return ResultUtils.success(result);
     }
 
@@ -467,16 +473,35 @@ public class GeneratorController {
             throw new BusinessException(ErrorCode.NOT_FOUND_ERROR, "产物包不存在");
         }
         String projectPath = System.getProperty("user.dir");
-        String tempDirPath = String.format("%s/.temp/use/%s", projectPath, id);
+        String tempDirPath = String.format("%s/.temp/use/%s/%s", projectPath, id,loginUser.getId());
         String zipFilePath = tempDirPath + "/dist.zip";
-        if (!FileUtil.exist(zipFilePath)) {
-            FileUtil.touch(zipFilePath);
+        if (!FileUtil.exist(tempDirPath)) {
+            FileUtil.mkdir(tempDirPath);
         }
-        //下载生成器
-        try {
-            cosManager.download(distPath, zipFilePath);
-        } catch (Exception e) {
-            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "生成器下载失败");
+        // 使用文件缓存
+        String cacheFilePath = getCacheFilePath(id, distPath);
+        Path cacheFilePathObj = Paths.get(cacheFilePath);
+        Path zipFilePathObj = Paths.get(zipFilePath);
+
+        if (!FileUtil.exist(zipFilePath)) {
+            // 有缓存，复制文件
+            if (FileUtil.exist(cacheFilePath)) {
+                Files.copy(cacheFilePathObj, zipFilePathObj);
+            } else {
+                // 没有缓存，从对象存储下载文件
+                FileUtil.touch(zipFilePath);
+                try {
+                    cosManager.download(distPath, zipFilePath);
+                } catch (Exception e) {
+                    throw new BusinessException(ErrorCode.SYSTEM_ERROR, "生成器下载失败");
+                }
+                // 写文件缓存
+                File parentFile = cacheFilePathObj.toFile().getParentFile();
+                if (!FileUtil.exist(parentFile)) {
+                    FileUtil.mkdir(parentFile);
+                }
+                Files.copy(zipFilePathObj, cacheFilePathObj);
+            }
         }
         //解压
         File unzipDistDir = ZipUtil.unzip(zipFilePath);
@@ -488,7 +513,7 @@ public class GeneratorController {
         //windows执行.bat文件
         File scriptFile = FileUtil.loopFiles(unzipDistDir, 2, null)
                 .stream()
-                .filter(file -> file.isFile() && "generator.bat".equals(file.getName()))
+                .filter(file -> file.isFile() && "generator".equals(file.getName()))
                 .findFirst()
                 .orElseThrow(RuntimeException::new);
         //添加可执行权限
@@ -499,7 +524,7 @@ public class GeneratorController {
 
         }
         File scriptDir = scriptFile.getParentFile();
-        String scriptAbsolutePath = scriptFile.getAbsolutePath().replace("\\", "/");
+        String scriptAbsolutePath = scriptFile.getAbsolutePath();
         String[] commands = new String[]{scriptAbsolutePath, "json-generate", "--file=" + dataModelFilePath};
         ProcessBuilder processBuilder = new ProcessBuilder(commands);
         processBuilder.directory(scriptDir);
@@ -592,5 +617,16 @@ public class GeneratorController {
         CompletableFuture.runAsync(() -> {
             FileUtil.del(tempDirPath);
         });
+    }
+
+    /**
+     * 获取缓存文件所在目录
+     * @param id
+     * @return
+     */
+    public String getCacheFileDir(long id) {
+        String projectPath = System.getProperty("user.dir");
+        String tempDirPath = String.format("%s/.temp/cache/%s", projectPath, id);
+        return tempDirPath;
     }
 }

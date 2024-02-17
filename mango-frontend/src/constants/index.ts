@@ -6,7 +6,7 @@ export const BACKEND_HOST_LOCAL = "http://localhost:8081";
 /**
  * 线上后端地址
  */
-export const BACKEND_HOST_PROD = "https://yupi.icu";
+export const BACKEND_HOST_PROD = "http://124.70.186.115:8081";
 
 /**
  * COS 地址

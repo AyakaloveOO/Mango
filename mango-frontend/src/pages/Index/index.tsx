@@ -1,7 +1,4 @@
-import {
-  listGeneratorVoByPageFastUsingPost,
-  listGeneratorVoByPageUsingPost
-} from '@/services/backend/generatorController';
+import { listGeneratorVoByPageFastUsingPost } from '@/services/backend/generatorController';
 import UserOutlined from '@ant-design/icons/lib/icons/UserOutlined';
 import { PageContainer, ProFormSelect, ProFormText, QueryFilter } from '@ant-design/pro-components';
 import { Avatar, Card, Flex, Image, Input, List, message, Tabs, Tag, Typography } from 'antd';

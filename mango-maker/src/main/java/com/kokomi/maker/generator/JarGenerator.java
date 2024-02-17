@@ -8,7 +8,7 @@ import java.io.*;
 public class JarGenerator {
     public static void doGenerate(String projectDir) throws IOException, InterruptedException {
         //构建jar包命令
-        String mvnCommand="mvn.cmd clean package -DskipTests=true";
+        String mvnCommand="mvn clean package -DskipTests=true";
         //拆分命令
         ProcessBuilder processBuilder = new ProcessBuilder(mvnCommand.split(" "));
         processBuilder.directory(new File(projectDir));
